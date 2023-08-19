@@ -1,8 +1,10 @@
 const express = require('express');
 const rotas = express();
 
-rotas.get('/todos')
-rotas.post('/todos')
+const { getTodos,createTodo} = require('../controladores/todos')
+
+rotas.get('/todos', getTodos)
+rotas.post('/todos',createTodo)
 
 
 
