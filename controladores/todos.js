@@ -1,3 +1,4 @@
+const {  writeFile } = require('fs')
 const fs = require('fs/promises')
 
 const getTodos = async (req,res) =>{
@@ -25,20 +26,28 @@ const createTodo = async (req,res) =>{
 }
 
 const checkedTodo = async (req,res) =>{
-    const {id} = req.params
-    const {done} = req.body
+    const { id } = req.params
+    const { todo, done } = req.body
+    console.log(req.body)
+    const newTodo = {
+        id: +id,
+        todo,
+        done
+    }
+
     const databaseTodos = (await fs.readFile('./database/todos.json')).toString()
     const arrayTodos = JSON.parse(databaseTodos);
-    
-    const todo = arrayTodos.find((todo)=> todo.id === +id);
-    todo.done = done;
 
+    const indiceTodoEncontrado = arrayTodos.findIndex((todo)=> todo.id === +id);
+    arrayTodos.splice(indiceTodoEncontrado,1,newTodo);
+    
     const arrayTodosJSON = JSON.stringify(arrayTodos)
+    
     await fs.writeFile('./database/todos.json', arrayTodosJSON)
 
-    return res.status(200)
-}
+    return res.status(203).json()
 
+}
 module.exports = {
     getTodos,
     createTodo,

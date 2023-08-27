@@ -5,7 +5,7 @@ const { getTodos,createTodo,checkedTodo} = require('../controladores/todos')
 
 rotas.get('/todos', getTodos);
 rotas.post('/todos', createTodo);
-rotas.patch('/todos/:id/checked', checkedTodo);
+rotas.put('/todos/:id/checked', checkedTodo);
 
 
 
