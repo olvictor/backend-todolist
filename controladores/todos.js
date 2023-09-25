@@ -1,55 +1,78 @@
-const {  writeFile } = require('fs')
-const fs = require('fs/promises')
+const pool = require('../database/connectionDB')
 
-const getTodos = async (req,res) =>{
-    const databaseTodos = (await fs.readFile('./database/todos.json')).toString()
-    const arrayTodos = JSON.parse(databaseTodos)
-    res.json(arrayTodos)
+const getTodos = async (req,res) => {
+    try{
+        
+        const databaseTodos = await pool.query('SELECT * FROM todos')
+        return res.status(200).json(databaseTodos.rows)
+        
+    }
+    catch(error){
+        return res.status(500).json({mensagem: error.message})
+    }
 }
 
 const createTodo = async (req,res) =>{
+    const {task,done} = req.body
 
-    const {todo,done} = req.body
-    const databaseTodos = (await fs.readFile('./database/todos.json')).toString()
-    let arrayTodos = JSON.parse(databaseTodos)
-    
-    arrayTodos.push({
-        id: Math.random(),
-        todo,
-        done
-    })
-    const arrayTodosJSON = JSON.stringify(arrayTodos)
-    await fs.writeFile('./database/todos.json', arrayTodosJSON)
-    return res.json({
-        message:'OK'
-    });
+    try{
+        const insertTodo = await pool.query('INSERT INTO todos(task,done)VALUES($1,$2)',[task,done])
+        return res.status(201).json()
+    }
+    catch(error){
+        return res.status(500).json({mensagem: error.message})
+
+    }
+
+
 }
 
 const checkedTodo = async (req,res) =>{
-    const { id } = req.params
-    const { todo, done } = req.body
-    console.log(req.body)
-    const newTodo = {
-        id: +id,
-        todo,
-        done
+    const {id} = req.params
+    const { done } = req.body
+
+
+
+    try{
+        const todoExist = await pool.query('SELECT * FROM todos WHERE id = $1',[id])
+
+        if(todoExist.rowCount < 1){
+            return res.status(404).json({mensagem: 'Todo não encontrado'})
+        }
+        
+        const checkeTodo =  await pool.query('UPDATE todos set done = $1 WHERE id = $2',[done,id])
+
+        return res.status(200).json()
     }
+    catch(error){
+        return res.status(500).json({mensagem: error.message})
 
-    const databaseTodos = (await fs.readFile('./database/todos.json')).toString()
-    const arrayTodos = JSON.parse(databaseTodos);
+    }
+}
 
-    const indiceTodoEncontrado = arrayTodos.findIndex((todo)=> todo.id === +id);
-    arrayTodos.splice(indiceTodoEncontrado,1,newTodo);
-    
-    const arrayTodosJSON = JSON.stringify(arrayTodos)
-    
-    await fs.writeFile('./database/todos.json', arrayTodosJSON)
+const deletTodo = async (req,res) =>{
+    const {id} = req.params
 
-    return res.status(203).json()
+    try{
+        const todoExist = await pool.query('SELECT * FROM todos WHERE id = $1',[id])
+        
+        if(todoExist.rowCount < 1){
+            return res.status(404).json({mensagem: 'Todo não encontrado'})
+        }
+
+        const deletTodoId = await pool.query('DELETE FROM todos WHERE id = $1',[id])
+        
+        return res.status(200).json()
+    }
+    catch(error){
+        return res.status(500).json({mensagem: error.message})
+
+    }
 
 }
 module.exports = {
     getTodos,
     createTodo,
-    checkedTodo
+    checkedTodo,
+    deletTodo
 }
