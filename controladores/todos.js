@@ -17,6 +17,7 @@ const createTodo = async (req,res) =>{
 
     try{
         const insertTodo = await pool.query('INSERT INTO todos(task,done)VALUES($1,$2)',[task,done])
+        
         return res.status(201).json()
     }
     catch(error){
@@ -70,9 +71,32 @@ const deletTodo = async (req,res) =>{
     }
 
 }
+
+const editTodo = async (req,res) =>{
+    const {id} = req.params
+    const { todo } = req.body
+    try{
+        const todoExist = await pool.query('SELECT * FROM todos WHERE id = $1',[id])
+        
+        if(todoExist.rowCount < 1){
+            return res.status(404).json({mensagem: 'Todo não encontrado'})
+        }
+
+        const deletTodoId = await pool.query('UPDATE  todos set task = $2 WHERE id = $1',[id,todo])
+        
+        return res.status(200).json()
+    }
+    catch(error){
+        return res.status(500).json({mensagem: error.message})
+
+    }
+
+}
+
 module.exports = {
     getTodos,
     createTodo,
     checkedTodo,
-    deletTodo
+    deletTodo,
+    editTodo
 }
